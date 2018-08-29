@@ -14,33 +14,34 @@ region_list = ['Avondale', 'Bathurst', 'Bayview', 'Lansing', 'Newtonbrook NE',
                'Newtonbrook NW', 'Newtonbrook SW', 'Yonge East', 'Yonge West']
 
 df_dict = {}
-
-#Topics
+# TEST AREA FOR CSV
 M2R = pd.read_csv("M2R Raw Data.csv", encoding = "ISO-8859-1")
 M2R.fillna('', inplace=True)
 
-
 print (len(M2R['Topic'].unique()))
-
 topics = list(M2R['Topic'].unique())
-    
     
 topic_dict = {}
 
 for item in topics:
     
     topic_dict[item] = M2R.loc[M2R['Topic'] == item]
-    
     topic_dict[item] = topic_dict[item].set_index('Topic')
 
-# Loop through all folders/regions (9)
-for region in region_list:
+
+
+
+
+
+# ACTUAL CODE
+for region in region_list:  # this should fixed to simply loop through a series of randomly named folders
     
     print (region_path + region)
     
     # Loop through all CSV files in each folder/region (130)
-    for fname in glob.glob(region_path + region + '/*.csv'):        
-    
+
+    for fname in glob.glob(region_path + region + '/*.csv'):
+
         file_name = (fname.split('\\', 6)[-1])      # 123456789.csv
         file_code = str((file_name.split('.')[0]))  # just 123456789
         
@@ -57,9 +58,7 @@ for region in region_list:
             f.write(s)
             f.truncate()
             f.close()
-        """
-        
-        
+        """        
         
         df = pd.read_csv(fname, skiprows=1, encoding = "ISO-8859-1")
         
@@ -87,7 +86,7 @@ for key, value in region_df_dict.items():
 
 for region in region_list:
     
-    region_df_dict[region].to_excel(region + '.xlsx')
+    region_df_dict[region].to_excel("Split into Regions (Organized)\\" + region + ".xlsx")
     
     
     
