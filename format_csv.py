@@ -2,6 +2,9 @@
 # 1) import <python packages>
 # 2) import <your modules>
 
+
+import matplotlib as plt
+
 import os
 import glob
 import pandas as pd
@@ -11,22 +14,37 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 region_path = dir_path + '\\Split into Regions\\'
 
 region_list = ['Avondale', 'Bathurst', 'Bayview', 'Lansing', 'Newtonbrook NE',
-               'Newtonbrook NW', 'Netwonbrook SW', 'Yonge East', 'Yonge West']
+               'Newtonbrook NW', 'Newtonbrook SW', 'Yonge East', 'Yonge West']
+
+df_dict = {}
+
+# TEST AREA FOR CSV
+M2R = pd.read_csv("M2R Raw Data.csv", encoding = "ISO-8859-1")
+M2R.fillna('', inplace=True)
+
+print (len(M2R['Topic'].unique()))
+topics = list(M2R['Topic'].unique())
+    
+topic_dict = {}
+
+for item in topics:
+    
+    topic_dict[item] = M2R.loc[M2R['Topic'] == item]
+    topic_dict[item] = topic_dict[item].set_index('Topic')
 
 
 
-counter = 0
-# Loop through all folders/regions (9)
-for region in region_list:
+
+
+
+# ACTUAL CODE
+for region in region_list:  # this should fixed to simply loop through a series of randomly named folders
     
     print (region_path + region)
     
     # Loop through all CSV files in each folder/region (130)
     for fname in glob.glob(region_path + region + '/*.csv'):
-        
-        counter +=1
-        
-    
+
         file_name = (fname.split('\\', 6)[-1])      # 123456789.csv
         file_code = str((file_name.split('.')[0]))  # just 123456789
         
@@ -44,35 +62,46 @@ for region in region_list:
             f.truncate()
             f.close()
         """
+    
         
-        df = pd.read_csv(fname, encoding = "ISO-8859-1")
-        df = df.reset_index()
-        print (df)
-        print (df.iloc[0])
+        # Step 1: Get the dictionary of DataFrames
+        df = pd.read_csv(fname, skiprows=1, encoding="ISO-8859-1") # skiprows is very important!!!!!!!!
+        df = df[['Topic', 'Characteristics', 'Male', 'Female', 'Total']]
+        df['file_code'] = file_code #every df needs to keep unique code
+        df['Region'] = region
         
-        df = df.columns
+        df_dict[file_code] = df
+        
+        
+region_df_dict = {}
 
 
-print (counter)
-# This is just a test area for handling the CSV data
-# M2R Code (Area Code)
-M2R = pd.read_csv("M2R Raw Data.csv", encoding = "ISO-8859-1")
-M2R.fillna('', inplace=True)
+for region in region_list:
+    
+    region_df_dict[region] = pd.DataFrame(columns=['Topic', 'Characteristics', 'Male', 'Female', 'Total', 'file_code', 'Region'])
 
+    for code, data in df_dict.items():
+        
+        print (code)
+        
+        if data['Region'].str.contains(region).all():
+           
+           region_df_dict[region] = pd.concat([region_df_dict[region], data])
+           
+           
 
-
-print (len(M2R['Topic'].unique()))
-
-topics = list(M2R['Topic'].unique())
+for key, value in region_df_dict.items():
+    
+    region_df_dict[key] = region_df_dict[key].sort_values(by=['Topic'])
     
     
-topic_dict = {}
+print (dir_path)
 
-for item in topics:
-    
-    topic_dict[item] = M2R.loc[M2R['Topic'] == item]
-    
-    topic_dict[item] = topic_dict[item].set_index('Topic')
-    
-    #print (topic_dict[item])
-    
+region_df_dict['Avondale'].to_excel('Avondale.xlsx')
+
+
+bar = region_df_dict['Avondale'].plot.bar()
+dens = region_df_dict['Avondale'].plot.density()
+hexbin = region_df_dict['Avondale'].plot.hexbin()
+area = region_df_dict['Avondale'].plot.area()
+
